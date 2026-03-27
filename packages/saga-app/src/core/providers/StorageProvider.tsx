@@ -79,7 +79,11 @@ export function StorageProvider({ children }: StorageProviderProps): React.JSX.E
       setWallets(loadedWallets)
       const savedWalletId = await AppStorage.get<string>('activeWalletId')
       const savedIdentityId = await AppStorage.get<string>('activeIdentityId')
-      if (savedWalletId) setActiveWalletId(savedWalletId)
+      if (savedWalletId && loadedWallets.some(w => w.id === savedWalletId)) {
+        setActiveWalletId(savedWalletId)
+      } else if (savedWalletId) {
+        AppStorage.set('activeWalletId', '')
+      }
       if (savedIdentityId) setActiveIdentityId(savedIdentityId)
       setInitialized(true)
     }
@@ -106,14 +110,21 @@ export function StorageProvider({ children }: StorageProviderProps): React.JSX.E
     setWallets(prev => [...prev, wallet])
   }, [])
 
-  const deleteWallet = useCallback((id: string) => {
-    RealmStore.write(() => {
-      const realm = RealmStore.getInstance()
-      const record = realm.objectForPrimaryKey('Wallet', id)
-      if (record) realm.delete(record)
-    })
-    setWallets(prev => prev.filter(w => w.id !== id))
-  }, [])
+  const deleteWallet = useCallback(
+    (id: string) => {
+      RealmStore.write(() => {
+        const realm = RealmStore.getInstance()
+        const record = realm.objectForPrimaryKey('Wallet', id)
+        if (record) realm.delete(record)
+      })
+      if (activeWalletId === id) {
+        setActiveWalletId(null)
+        AppStorage.set('activeWalletId', '')
+      }
+      setWallets(prev => prev.filter(w => w.id !== id))
+    },
+    [activeWalletId]
+  )
 
   const setActiveWallet = useCallback((id: string) => {
     setActiveWalletId(id)

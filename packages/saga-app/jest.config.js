@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 Epic Digital Interactive Media LLC
 
+const path = require('path')
+const bip39WordlistDir = path.dirname(require.resolve('@scure/bip39/wordlists/english.js'))
+
 module.exports = {
   preset: 'react-native',
   transformIgnorePatterns: [
@@ -14,8 +17,7 @@ module.exports = {
     '^realm$': '<rootDir>/__mocks__/realm.js',
     '@react-native-async-storage/async-storage':
       '<rootDir>/__mocks__/@react-native-async-storage/async-storage.js',
-    '^@scure/bip39/wordlists/([^.]+)(\\.js)?$':
-      '<rootDir>/../../node_modules/.pnpm/@scure+bip39@2.0.1/node_modules/@scure/bip39/wordlists/$1.js',
+    '^@scure/bip39/wordlists/([^.]+)(\\.js)?$': `${bip39WordlistDir}/$1.js`,
     'react-native-qrcode-svg': '<rootDir>/__mocks__/react-native-qrcode-svg.js',
     '@react-native-clipboard/clipboard': '<rootDir>/__mocks__/@react-native-clipboard/clipboard.js',
   },

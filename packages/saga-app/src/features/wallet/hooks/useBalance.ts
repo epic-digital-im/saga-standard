@@ -28,8 +28,8 @@ export function useBalance(address: `0x${string}` | null, chainId: ChainId): Use
         setBalances(result)
         setLoading(false)
       })
-      .catch(err => {
-        setError(err.message)
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : String(err))
         setLoading(false)
       })
   }, [address, chainId])
