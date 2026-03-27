@@ -3,6 +3,7 @@
 // Copyright 2026 Epic Digital Interactive Media LLC
 
 import { beforeEach, describe, expect, it } from 'vitest'
+import { privateKeyToAccount } from 'viem/accounts'
 import { drizzle } from 'drizzle-orm/d1'
 import { agents, groupMembers } from '../db/schema'
 import { RelayRoom } from '../relay/relay-room'
@@ -13,6 +14,16 @@ import {
 } from './relay-test-helpers'
 import type { MockWebSocket } from './relay-test-helpers'
 import type { Env } from '../bindings'
+
+// Hardhat's first account — well-known test key, NOT a real wallet
+const TEST_PRIVATE_KEY =
+  '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' as const // gitleaks:allow
+const testAccount = privateKeyToAccount(TEST_PRIVATE_KEY)
+const TEST_WALLET = testAccount.address.toLowerCase() // 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+async function signChallenge(challenge: string): Promise<string> {
+  return testAccount.signMessage({ message: challenge })
+}
 
 describe('RelayRoom', () => {
   let ctx: ReturnType<typeof createMockDurableObjectState>
@@ -28,7 +39,7 @@ describe('RelayRoom', () => {
     await orm.insert(agents).values({
       id: 'agent_alice',
       handle: 'alice',
-      walletAddress: '0xalice',
+      walletAddress: TEST_WALLET,
       chain: 'eip155:8453',
       registeredAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -38,7 +49,7 @@ describe('RelayRoom', () => {
     await orm.insert(agents).values({
       id: 'agent_bob',
       handle: 'bob',
-      walletAddress: '0xbob',
+      walletAddress: TEST_WALLET,
       chain: 'eip155:8453',
       registeredAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -53,25 +64,23 @@ describe('RelayRoom', () => {
     return JSON.parse(ws._sent[ws._sent.length - 1])
   }
 
-  async function authenticateWs(
-    ws: MockWebSocket,
-    handle: string,
-    walletAddress: string
-  ): Promise<void> {
+  async function authenticateWs(ws: MockWebSocket, handle: string): Promise<void> {
     // Simulate challenge sent (normally happens in fetch)
     const challenge = `saga-relay:${crypto.randomUUID()}:${Date.now()}`
     const expiresAt = new Date(Date.now() + 300_000).toISOString()
     ws.serializeAttachment({ authenticated: false, challenge, expiresAt })
     ctx._websockets.push(ws)
 
+    const signature = await signChallenge(challenge)
+
     await room.webSocketMessage(
       ws,
       JSON.stringify({
         type: 'auth:verify',
-        walletAddress,
+        walletAddress: TEST_WALLET,
         chain: 'eip155:8453',
         handle,
-        signature: 'valid-signature-1234567890',
+        signature,
         challenge,
       })
     )
@@ -80,7 +89,7 @@ describe('RelayRoom', () => {
   describe('authentication', () => {
     it('authenticates a valid agent', async () => {
       const ws = createMockWebSocket()
-      await authenticateWs(ws, 'alice', '0xalice')
+      await authenticateWs(ws, 'alice')
 
       const msg = getLastMessage(ws)
       expect(msg.type).toBe('auth:success')
@@ -144,8 +153,8 @@ describe('RelayRoom', () => {
     it('delivers to online recipient', async () => {
       const aliceWs = createMockWebSocket()
       const bobWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
-      await authenticateWs(bobWs, 'bob', '0xbob')
+      await authenticateWs(aliceWs, 'alice')
+      await authenticateWs(bobWs, 'bob')
 
       const envelope = {
         v: 1,
@@ -174,7 +183,7 @@ describe('RelayRoom', () => {
 
     it('mailboxes message for offline recipient', async () => {
       const aliceWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
+      await authenticateWs(aliceWs, 'alice')
 
       const envelope = {
         v: 1,
@@ -197,7 +206,7 @@ describe('RelayRoom', () => {
 
     it('rejects envelope with sender identity mismatch', async () => {
       const aliceWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
+      await authenticateWs(aliceWs, 'alice')
 
       const envelope = {
         v: 1,
@@ -237,7 +246,7 @@ describe('RelayRoom', () => {
       )
 
       const bobWs = createMockWebSocket()
-      await authenticateWs(bobWs, 'bob', '0xbob')
+      await authenticateWs(bobWs, 'bob')
 
       await room.webSocketMessage(bobWs, JSON.stringify({ type: 'mailbox:drain' }))
 
@@ -252,8 +261,8 @@ describe('RelayRoom', () => {
       const ws1 = createMockWebSocket()
       const ws2 = createMockWebSocket()
 
-      await authenticateWs(ws1, 'alice', '0xalice')
-      await authenticateWs(ws2, 'alice', '0xalice')
+      await authenticateWs(ws1, 'alice')
+      await authenticateWs(ws2, 'alice')
 
       // Neither should be closed
       expect(ws1._closed).toBe(false)
@@ -265,9 +274,9 @@ describe('RelayRoom', () => {
       const ws2 = createMockWebSocket()
       const sender = createMockWebSocket()
 
-      await authenticateWs(ws1, 'alice', '0xalice')
-      await authenticateWs(ws2, 'alice', '0xalice')
-      await authenticateWs(sender, 'bob', '0xbob')
+      await authenticateWs(ws1, 'alice')
+      await authenticateWs(ws2, 'alice')
+      await authenticateWs(sender, 'bob')
 
       // Bob sends to alice
       const envelope = {
@@ -299,15 +308,15 @@ describe('RelayRoom', () => {
       const ws1 = createMockWebSocket()
       const ws2 = createMockWebSocket()
 
-      await authenticateWs(ws1, 'alice', '0xalice')
-      await authenticateWs(ws2, 'alice', '0xalice')
+      await authenticateWs(ws1, 'alice')
+      await authenticateWs(ws2, 'alice')
 
       // Disconnect ws1
       await room.webSocketClose(ws1, 1000, 'bye', true)
 
       // Send to alice — only ws2 should receive
       const sender = createMockWebSocket()
-      await authenticateWs(sender, 'bob', '0xbob')
+      await authenticateWs(sender, 'bob')
 
       const envelope = {
         v: 1,
@@ -331,7 +340,7 @@ describe('RelayRoom', () => {
   describe('memory-sync interception', () => {
     it('stores memory-sync envelope in canonical store', async () => {
       const aliceWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
+      await authenticateWs(aliceWs, 'alice')
 
       const envelope = {
         v: 1,
@@ -355,8 +364,8 @@ describe('RelayRoom', () => {
     it('forwards memory-sync to other connections for same handle', async () => {
       const derpA = createMockWebSocket()
       const derpB = createMockWebSocket()
-      await authenticateWs(derpA, 'alice', '0xalice')
-      await authenticateWs(derpB, 'alice', '0xalice')
+      await authenticateWs(derpA, 'alice')
+      await authenticateWs(derpB, 'alice')
 
       const envelope = {
         v: 1,
@@ -394,8 +403,8 @@ describe('RelayRoom', () => {
     it('does not intercept non-memory-sync envelopes', async () => {
       const aliceWs = createMockWebSocket()
       const bobWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
-      await authenticateWs(bobWs, 'bob', '0xbob')
+      await authenticateWs(aliceWs, 'alice')
+      await authenticateWs(bobWs, 'bob')
 
       const envelope = {
         v: 1,
@@ -427,7 +436,7 @@ describe('RelayRoom', () => {
   describe('sync-request handler', () => {
     it('responds with envelopes since checkpoint', async () => {
       const aliceWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
+      await authenticateWs(aliceWs, 'alice')
 
       const envelope = {
         v: 1,
@@ -445,7 +454,7 @@ describe('RelayRoom', () => {
 
       // Now send a sync-request from another connection for the same handle
       const aliceWs2 = createMockWebSocket()
-      await authenticateWs(aliceWs2, 'alice', '0xalice')
+      await authenticateWs(aliceWs2, 'alice')
 
       await room.webSocketMessage(
         aliceWs2,
@@ -464,7 +473,7 @@ describe('RelayRoom', () => {
 
     it('returns empty response for no envelopes since checkpoint', async () => {
       const aliceWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
+      await authenticateWs(aliceWs, 'alice')
 
       // Use a future checkpoint so no envelopes match
       await room.webSocketMessage(
@@ -505,8 +514,8 @@ describe('RelayRoom', () => {
 
       const aliceWs = createMockWebSocket()
       const bobWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
-      await authenticateWs(bobWs, 'bob', '0xbob')
+      await authenticateWs(aliceWs, 'alice')
+      await authenticateWs(bobWs, 'bob')
       bobWs._sent.length = 0 // Clear auth messages
 
       const envelope = {
@@ -545,7 +554,7 @@ describe('RelayRoom', () => {
       ])
 
       const aliceWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
+      await authenticateWs(aliceWs, 'alice')
       // Bob is NOT connected
 
       const envelope = {
@@ -567,7 +576,7 @@ describe('RelayRoom', () => {
 
       // Bob later connects and drains mailbox
       const bobWs = createMockWebSocket()
-      await authenticateWs(bobWs, 'bob', '0xbob')
+      await authenticateWs(bobWs, 'bob')
       await room.webSocketMessage(bobWs, JSON.stringify({ type: 'mailbox:drain' }))
 
       const batch = getLastMessage(bobWs)
@@ -583,7 +592,7 @@ describe('RelayRoom', () => {
         .values([{ groupId: 'team-alpha', handle: 'bob', addedAt: new Date().toISOString() }])
 
       const aliceWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
+      await authenticateWs(aliceWs, 'alice')
 
       const envelope = {
         v: 1,
@@ -611,7 +620,7 @@ describe('RelayRoom', () => {
         .values([{ groupId: 'team-alpha', handle: 'alice', addedAt: new Date().toISOString() }])
 
       const aliceWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
+      await authenticateWs(aliceWs, 'alice')
       aliceWs._sent.length = 0 // Clear auth messages
 
       const envelope = {
@@ -638,7 +647,7 @@ describe('RelayRoom', () => {
   describe('connection lifecycle', () => {
     it('handles pong message', async () => {
       const ws = createMockWebSocket()
-      await authenticateWs(ws, 'alice', '0xalice')
+      await authenticateWs(ws, 'alice')
 
       // Send pong (should not produce any response, just updates lastPong)
       const sentBefore = ws._sent.length
@@ -650,8 +659,8 @@ describe('RelayRoom', () => {
     it('handles webSocketClose by removing from registry', async () => {
       const aliceWs = createMockWebSocket()
       const bobWs = createMockWebSocket()
-      await authenticateWs(aliceWs, 'alice', '0xalice')
-      await authenticateWs(bobWs, 'bob', '0xbob')
+      await authenticateWs(aliceWs, 'alice')
+      await authenticateWs(bobWs, 'bob')
 
       // Alice disconnects
       await room.webSocketClose(aliceWs, 1000, 'bye', true)
