@@ -188,4 +188,47 @@ contract SAGAOrgIdentityTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 999));
         org.registeredAt(999);
     }
+
+    // --- Test 16: registerOrgInDirectory success ---
+    function test_registerOrgInDirectory_success() public {
+        vm.prank(user1);
+        uint256 tokenId = org.registerOrgInDirectory(
+            "epic-digital", "Epic Digital Interactive Media", "epic-hub"
+        );
+
+        assertEq(tokenId, 0);
+        assertEq(org.ownerOf(tokenId), user1);
+        assertEq(org.orgHandle(tokenId), "epic-digital");
+        assertEq(org.orgName(tokenId), "Epic Digital Interactive Media");
+        assertEq(org.orgDirectoryId(tokenId), "epic-hub");
+
+        (SAGAHandleRegistry.EntityType entityType, uint256 regTokenId, address contractAddr) =
+            registry.resolveScopedHandle("epic-digital", "epic-hub");
+        assertEq(uint256(entityType), uint256(SAGAHandleRegistry.EntityType.ORG));
+        assertEq(regTokenId, 0);
+        assertEq(contractAddr, address(org));
+    }
+
+    // --- Test 17: same org handle in different directories ---
+    function test_registerOrgInDirectory_sameHandleDifferentDirs() public {
+        vm.prank(user1);
+        org.registerOrgInDirectory("epic-digital", "Epic A", "dir-a");
+
+        vm.prank(user2);
+        org.registerOrgInDirectory("epic-digital", "Epic B", "dir-b");
+
+        (, uint256 tidA,) = registry.resolveScopedHandle("epic-digital", "dir-a");
+        (, uint256 tidB,) = registry.resolveScopedHandle("epic-digital", "dir-b");
+
+        assertEq(tidA, 0);
+        assertEq(tidB, 1);
+    }
+
+    // --- Test 18: orgDirectoryId for global org returns empty string ---
+    function test_orgDirectoryId_globalReturnsEmpty() public {
+        vm.prank(user1);
+        uint256 tokenId = org.registerOrganization("global-org", "Global Org");
+
+        assertEq(org.orgDirectoryId(tokenId), "");
+    }
 }
