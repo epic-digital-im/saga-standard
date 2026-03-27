@@ -21,6 +21,7 @@ import { createCanonicalMemoryStore } from './memory-store'
 import type { CanonicalMemoryStore } from './memory-store'
 import { createFederationLinkManager } from './federation-link'
 import type { FederationLinkManager } from './federation-link'
+import { privateKeyToAccount } from 'viem/accounts'
 
 /**
  * RelayRoom Durable Object — manages WebSocket connections for the SAGA relay.
@@ -686,14 +687,20 @@ export class RelayRoom {
       if (!this.env.LOCAL_DIRECTORY_ID) {
         throw new Error('Federation requires LOCAL_DIRECTORY_ID')
       }
-      // TODO: Add OPERATOR_WALLET env var and validate here
+      const operatorKey = this.env.OPERATOR_PRIVATE_KEY
+      const operatorAccount = operatorKey ? privateKeyToAccount(operatorKey as `0x${string}`) : null
+
       this.federationLinks = createFederationLinkManager({
         db: this.env.DB,
-        localDirectoryId: this.env.LOCAL_DIRECTORY_ID,
-        localOperatorWallet: '', // TODO: configure OPERATOR_WALLET from env
+        localDirectoryId: this.env.LOCAL_DIRECTORY_ID!,
+        localOperatorWallet: operatorAccount?.address.toLowerCase() ?? '',
         signChallenge: async (challenge: string) => {
-          // TODO: Sign with operator wallet. Placeholder for now.
-          return `placeholder-sig-${challenge}`
+          if (!operatorAccount) {
+            throw new Error(
+              'OPERATOR_PRIVATE_KEY not configured: cannot sign federation challenges'
+            )
+          }
+          return operatorAccount.signMessage({ message: challenge })
         },
       })
     }
