@@ -14,7 +14,7 @@ export const RealmStore = {
 
     const config: Realm.Configuration = {
       schema: ALL_SCHEMAS,
-      schemaVersion: 1,
+      schemaVersion: 2,
       ...(encryptionKey ? { encryptionKey: new Int8Array(encryptionKey) } : {}),
     }
 

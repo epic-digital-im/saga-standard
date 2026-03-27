@@ -12,6 +12,11 @@ jest.mock('../../../src/core/storage/realm-store', () => ({
     close: jest.fn(),
     write: jest.fn((cb: () => unknown) => cb()),
     query: jest.fn().mockReturnValue([]),
+    getInstance: jest.fn().mockReturnValue({
+      create: jest.fn(),
+      objectForPrimaryKey: jest.fn(),
+      delete: jest.fn(),
+    }),
   },
 }))
 
