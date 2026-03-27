@@ -3,3 +3,5 @@
 
 export { AbstractWallet } from './AbstractWallet'
 export type { WalletConstructorParams } from './AbstractWallet'
+export { SelfCustodyWallet } from './SelfCustodyWallet'
+export { ManagedWallet } from './ManagedWallet'
