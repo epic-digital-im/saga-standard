@@ -283,8 +283,9 @@ export class RelayRoom {
   /**
    * Check if a message ID has been seen recently.
    * Returns true if duplicate (should be rejected), false if new.
+   * Does NOT record the ID. Call markSeen() after successful processing.
    */
-  private isDuplicate(messageId: string): boolean {
+  private hasSeen(messageId: string): boolean {
     const now = Date.now()
 
     // Periodic cleanup of expired entries
@@ -303,9 +304,12 @@ export class RelayRoom {
       }
     }
 
-    // New message (or expired entry treated as new): record timestamp
-    this.recentMessageIds.set(messageId, now)
     return false
+  }
+
+  /** Record a message ID as seen after successful routing. */
+  private markSeen(messageId: string): void {
+    this.recentMessageIds.set(messageId, Date.now())
   }
 
   private async handleRelaySend(ws: WebSocket, msg: { envelope: unknown }): Promise<void> {
@@ -338,7 +342,7 @@ export class RelayRoom {
     }
 
     // Dedup: reject messages the hub has already seen
-    if (this.isDuplicate(envelope.id)) {
+    if (this.hasSeen(envelope.id)) {
       this.sendJson(ws, { type: 'relay:ack', messageId: envelope.id })
       return
     }
@@ -361,7 +365,8 @@ export class RelayRoom {
         }
       }
 
-      // Ack the sender
+      // Ack the sender and mark as seen (after successful processing)
+      this.markSeen(envelope.id)
       this.sendJson(ws, { type: 'relay:ack', messageId: envelope.id })
       return // Memory-sync routing is handled above — don't fall through to normal routing
     }
@@ -403,6 +408,7 @@ export class RelayRoom {
         }
       }
 
+      this.markSeen(envelope.id)
       this.sendJson(ws, { type: 'relay:ack', messageId: envelope.id })
       return
     }
@@ -456,6 +462,7 @@ export class RelayRoom {
       })
     }
 
+    this.markSeen(envelope.id)
     this.sendJson(ws, { type: 'relay:ack', messageId: envelope.id })
   }
 
@@ -727,7 +734,16 @@ export class RelayRoom {
         throw new Error('Federation requires LOCAL_DIRECTORY_ID')
       }
       const operatorKey = this.env.OPERATOR_PRIVATE_KEY
-      const operatorAccount = operatorKey ? privateKeyToAccount(operatorKey as `0x${string}`) : null
+      let operatorAccount: ReturnType<typeof privateKeyToAccount> | null = null
+      if (operatorKey) {
+        try {
+          operatorAccount = privateKeyToAccount(operatorKey as `0x${string}`)
+        } catch (err) {
+          throw new Error(
+            `Invalid OPERATOR_PRIVATE_KEY (expected 0x-prefixed 32-byte hex): ${err instanceof Error ? err.message : String(err)}`
+          )
+        }
+      }
 
       this.federationLinks = createFederationLinkManager({
         db: this.env.DB,
