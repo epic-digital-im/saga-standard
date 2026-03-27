@@ -393,7 +393,7 @@ describe('RelayRoom', () => {
       const envelope = {
         v: 1,
         type: 'memory-sync',
-        scope: 'self',
+        scope: 'private',
         from: 'alice@epicflow',
         to: 'alice@epicflow',
         ct: 'encrypted-memory-payload',
@@ -418,7 +418,7 @@ describe('RelayRoom', () => {
       const envelope = {
         v: 1,
         type: 'memory-sync',
-        scope: 'self',
+        scope: 'private',
         from: 'alice@epicflow',
         to: 'alice@epicflow',
         ct: 'encrypted-memory-payload',
@@ -489,7 +489,7 @@ describe('RelayRoom', () => {
       const envelope = {
         v: 1,
         type: 'memory-sync',
-        scope: 'self',
+        scope: 'private',
         from: 'alice@epicflow',
         to: 'alice@epicflow',
         ct: 'encrypted-memory-payload',

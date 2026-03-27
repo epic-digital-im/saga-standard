@@ -143,7 +143,7 @@ describe('Relay Integration', () => {
     const envelope = {
       v: 1,
       type: 'memory-sync',
-      scope: 'self',
+      scope: 'private',
       from: 'alice@epicflow',
       to: 'alice@epicflow',
       ct: opaquePayload,
@@ -374,7 +374,7 @@ describe('Relay Integration', () => {
       const envelope = {
         v: 1,
         type: 'memory-sync',
-        scope: 'self',
+        scope: 'private',
         from: 'alice@epicflow',
         to: 'alice@epicflow',
         ct: 'encrypted-data',
@@ -411,7 +411,7 @@ describe('Relay Integration', () => {
       const envelope = {
         v: 1,
         type: 'memory-sync',
-        scope: 'self',
+        scope: 'private',
         from: 'alice@epicflow',
         to: 'alice@epicflow',
         ct: 'realtime-encrypted-data',
@@ -435,7 +435,7 @@ describe('Relay Integration', () => {
       const env1 = {
         v: 1,
         type: 'memory-sync',
-        scope: 'self',
+        scope: 'private',
         from: 'alice@epicflow',
         to: 'alice@epicflow',
         ct: 'first-memory',
@@ -465,7 +465,7 @@ describe('Relay Integration', () => {
       const env2 = {
         v: 1,
         type: 'memory-sync',
-        scope: 'self',
+        scope: 'private',
         from: 'alice@epicflow',
         to: 'alice@epicflow',
         ct: 'second-memory',
@@ -495,7 +495,7 @@ describe('Relay Integration', () => {
       const envelope = {
         v: 1,
         type: 'memory-sync',
-        scope: 'self',
+        scope: 'private',
         from: 'alice@epicflow',
         to: 'alice@epicflow',
         ct: 'totally-opaque-encrypted-content',
