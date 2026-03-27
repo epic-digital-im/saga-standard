@@ -11,5 +11,8 @@ module.exports = {
     'react-native-reanimated': '<rootDir>/__mocks__/react-native-reanimated.js',
     'react-native-screens': '<rootDir>/__mocks__/react-native-screens.js',
     'react-native-safe-area-context': '<rootDir>/__mocks__/react-native-safe-area-context.js',
+    '^realm$': '<rootDir>/__mocks__/realm.js',
+    '@react-native-async-storage/async-storage':
+      '<rootDir>/__mocks__/@react-native-async-storage/async-storage.js',
   },
 }
