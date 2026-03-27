@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 Epic Digital Interactive Media LLC
 
-import type { PublicClient, WalletClient } from 'viem'
+import type { Address, PublicClient, WalletClient } from 'viem'
 import { decodeEventLog } from 'viem'
 import {
   type SupportedChain,
@@ -192,7 +192,7 @@ export async function mintOrgIdentity(options: {
 export async function mintDirectoryIdentity(options: {
   directoryId: string
   url: string
-  operatorWallet: string
+  operatorWallet: Address
   conformanceLevel: string
   walletClient: WalletClient
   publicClient: PublicClient
@@ -212,7 +212,7 @@ export async function mintDirectoryIdentity(options: {
   const txHash = await walletClient.writeContract({
     ...config,
     functionName: 'registerDirectory',
-    args: [directoryId, url, operatorWallet as `0x${string}`, conformanceLevel],
+    args: [directoryId, url, operatorWallet, conformanceLevel],
     account,
     chain: walletClient.chain,
   })
@@ -223,9 +223,10 @@ export async function mintDirectoryIdentity(options: {
     throw new Error('Transaction reverted while minting directory identity')
   }
 
-  // Find DirectoryRegistered event in logs
+  // Find DirectoryRegistered event in logs from the directory contract
   let tokenId: bigint | undefined
   for (const log of receipt.logs) {
+    if (log.address.toLowerCase() !== config.address.toLowerCase()) continue
     try {
       const decoded = decodeEventLog({
         abi: config.abi,
@@ -238,7 +239,7 @@ export async function mintDirectoryIdentity(options: {
         break
       }
     } catch {
-      // Not an event from this ABI, skip
+      // Not a matching event, skip
     }
   }
 

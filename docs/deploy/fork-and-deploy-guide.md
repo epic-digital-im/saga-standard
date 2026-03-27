@@ -10,7 +10,7 @@ Before you start, make sure you have:
 - A **Cloudflare account** (free tier works for development)
 - The **Wrangler CLI** installed: `pnpm add -g wrangler`
 - A wallet with **ETH on Base Sepolia** (for testnet) or **Base mainnet**
-  - Get testnet ETH from the [Base Sepolia Faucet](https://www.coinbase.com/faucets/base-ethereum-goerli-faucet)
+  - Get testnet ETH from the [Base Sepolia Faucet](https://www.coinbase.com/faucets/base-sepolia-testnet)
 - **Foundry** installed (for contract deployment): `curl -L https://foundry.paradigm.xyz | bash && foundryup`
 
 ## 1. Fork and Install
@@ -139,7 +139,7 @@ Open `packages/server/wrangler.toml` and replace all `<PLACEHOLDER>` values:
 | `<BLOCK_NUMBER>`        | Block number of your first contract deployment transaction         |
 | `<YOUR_DIRECTORY_ID>`   | The identifier you'll use when minting your Directory NFT (step 7) |
 | `<D1_DATABASE_ID>`      | From `wrangler d1 create` output                                   |
-| `<KV_NAMESPACE_ID>`     | From each `wrangler kv namespace create` output                    |
+| `<*_KV_NAMESPACE_ID>`   | From each `wrangler kv namespace create` output (one per binding)  |
 | `<YOUR_BUCKET_NAME>`    | From `wrangler r2 bucket create` output                            |
 | `<RANDOM_SECRET>`       | Generate with `openssl rand -hex 32`                               |
 

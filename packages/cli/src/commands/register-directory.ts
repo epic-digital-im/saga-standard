@@ -3,6 +3,7 @@
 
 import { Command } from 'commander'
 import chalk from 'chalk'
+import { getAddress, isAddress } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { SagaServerClient, isHandleAvailable, mintDirectoryIdentity } from '@epicdm/saga-client'
 import { loadConfig } from '../config'
@@ -30,7 +31,14 @@ export const registerDirectoryCommand = new Command('register-directory')
     const privateKeyHex = loadWalletPrivateKey(opts.wallet, opts.password)
     const account = privateKeyToAccount(privateKeyHex as `0x${string}`)
 
-    const operatorWallet = opts.operator ?? account.address
+    const rawOperator = opts.operator ?? account.address
+    if (!isAddress(rawOperator)) {
+      console.error(
+        chalk.red(`Invalid operator address: "${rawOperator}". Must be a valid 0x address.`)
+      )
+      process.exit(1)
+    }
+    const operatorWallet = getAddress(rawOperator)
 
     // 2. Resolve server (optional -- indexer wait is skipped without one)
     const config = loadConfig()

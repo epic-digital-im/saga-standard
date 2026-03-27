@@ -48,18 +48,18 @@ database_id = "<D1_DATABASE_ID>"            # From: wrangler d1 create <name>
 binding = "STORAGE"
 bucket_name = "<YOUR_BUCKET_NAME>-dev"      # e.g. "saga-docs-dev"
 
-# KV Namespaces
+# KV Namespaces (each must use a different KV namespace ID)
 [[env.dev.kv_namespaces]]
 binding = "SESSIONS"
-id = "<KV_NAMESPACE_ID>"                    # From: wrangler kv namespace create SESSIONS
+id = "<SESSIONS_KV_NAMESPACE_ID>"           # From: wrangler kv namespace create SESSIONS
 
 [[env.dev.kv_namespaces]]
 binding = "INDEXER_STATE"
-id = "<KV_NAMESPACE_ID>"                    # From: wrangler kv namespace create INDEXER_STATE
+id = "<INDEXER_STATE_KV_NAMESPACE_ID>"      # From: wrangler kv namespace create INDEXER_STATE
 
 [[env.dev.kv_namespaces]]
 binding = "RELAY_MAILBOX"
-id = "<KV_NAMESPACE_ID>"                    # From: wrangler kv namespace create RELAY_MAILBOX
+id = "<RELAY_MAILBOX_KV_NAMESPACE_ID>"      # From: wrangler kv namespace create RELAY_MAILBOX
 
 # Durable Objects
 [[env.dev.durable_objects.bindings]]
@@ -105,18 +105,18 @@ database_id = "<D1_DATABASE_ID>"
 binding = "STORAGE"
 bucket_name = "<YOUR_BUCKET_NAME>"
 
-# KV Namespaces
+# KV Namespaces (each must use a different KV namespace ID)
 [[env.production.kv_namespaces]]
 binding = "SESSIONS"
-id = "<KV_NAMESPACE_ID>"
+id = "<SESSIONS_KV_NAMESPACE_ID>"
 
 [[env.production.kv_namespaces]]
 binding = "INDEXER_STATE"
-id = "<KV_NAMESPACE_ID>"
+id = "<INDEXER_STATE_KV_NAMESPACE_ID>"
 
 [[env.production.kv_namespaces]]
 binding = "RELAY_MAILBOX"
-id = "<KV_NAMESPACE_ID>"
+id = "<RELAY_MAILBOX_KV_NAMESPACE_ID>"
 
 # Durable Objects
 [[env.production.durable_objects.bindings]]
