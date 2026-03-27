@@ -14,7 +14,7 @@ export interface AgentRegisteredEvent {
   tokenId: bigint
   handle: string
   owner: string
-  hubUrl: string
+  homeHubUrl: string
   registeredAt: bigint
 }
 

@@ -69,6 +69,36 @@ app.route('/v1/agents', documentRoutes)
 // Health check
 app.get('/health', c => c.json({ status: 'ok' }))
 
+// Admin: manually trigger indexer (dev only)
+app.post('/admin/reindex', async c => {
+  try {
+    // Log config for debugging
+    const rpc = c.env.BASE_RPC_URL ?? '(unset)'
+    const agent = c.env.AGENT_IDENTITY_CONTRACT ?? '(unset)'
+    const org = c.env.ORG_IDENTITY_CONTRACT ?? '(unset)'
+    const chain = c.env.INDEXER_CHAIN ?? 'eip155:84532'
+    const start = c.env.INDEXER_START_BLOCK ?? '0'
+    const cursor = await c.env.INDEXER_STATE.get('indexer:lastBlock')
+
+    console.log(
+      `[indexer] config: rpc=${rpc} agent=${agent} org=${org} chain=${chain} startBlock=${start} cursor=${cursor}`
+    )
+
+    await runIndexer(c.env)
+
+    const newCursor = await c.env.INDEXER_STATE.get('indexer:lastBlock')
+    console.log(`[indexer] done. cursor: ${cursor} -> ${newCursor}`)
+
+    return c.json({ status: 'ok', cursor: newCursor, prevCursor: cursor })
+  } catch (err) {
+    console.error('[indexer] error:', err)
+    return c.json(
+      { status: 'error', message: err instanceof Error ? err.message : String(err) },
+      500
+    )
+  }
+})
+
 // Named export for testing (tests use app.request())
 export { app }
 
