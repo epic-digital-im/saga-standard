@@ -14,5 +14,7 @@ module.exports = {
     '^realm$': '<rootDir>/__mocks__/realm.js',
     '@react-native-async-storage/async-storage':
       '<rootDir>/__mocks__/@react-native-async-storage/async-storage.js',
+    '^@scure/bip39/wordlists/([^.]+)(\\.js)?$':
+      '<rootDir>/../../node_modules/.pnpm/@scure+bip39@2.0.1/node_modules/@scure/bip39/wordlists/$1.js',
   },
 }
