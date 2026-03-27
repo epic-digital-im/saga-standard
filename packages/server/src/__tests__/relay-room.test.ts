@@ -225,6 +225,54 @@ describe('RelayRoom', () => {
       expect(err.type).toBe('relay:error')
       expect(err.error).toContain('mismatch')
     })
+
+    it('rejects duplicate message IDs', async () => {
+      const aliceWs = createMockWebSocket()
+      const bobWs = createMockWebSocket()
+      await authenticateWs(aliceWs, 'alice')
+      await authenticateWs(bobWs, 'bob')
+
+      const envelope = {
+        v: 1,
+        type: 'direct-message',
+        scope: 'mutual',
+        from: 'alice@epicflow',
+        to: 'bob@epicflow',
+        ct: 'encrypted-content',
+        ts: new Date().toISOString(),
+        id: 'msg-dedup-test-001',
+      }
+
+      // First send — should succeed
+      await room.webSocketMessage(aliceWs, JSON.stringify({ type: 'relay:send', envelope }))
+
+      // Check bob received the first delivery
+      const bobMessages = bobWs._sent.map((m: string) => JSON.parse(m))
+      const firstDelivered = bobMessages.filter(
+        (m: Record<string, unknown>) => m.type === 'relay:deliver'
+      )
+      expect(firstDelivered).toHaveLength(1)
+
+      // Clear bob's sent buffer to isolate second attempt
+      bobWs._sent.length = 0
+
+      // Second send with same ID — should be silently deduped
+      await room.webSocketMessage(aliceWs, JSON.stringify({ type: 'relay:send', envelope }))
+
+      const bobMessages2 = bobWs._sent.map((m: string) => JSON.parse(m))
+      const duplicateDelivered = bobMessages2.filter(
+        (m: Record<string, unknown>) => m.type === 'relay:deliver'
+      )
+      expect(duplicateDelivered).toHaveLength(0)
+
+      // Sender should still get ack for deduped messages (not an error)
+      const aliceMessages = aliceWs._sent.map((m: string) => JSON.parse(m))
+      const acks = aliceMessages.filter(
+        (m: Record<string, unknown>) =>
+          m.type === 'relay:ack' && m.messageId === 'msg-dedup-test-001'
+      )
+      expect(acks).toHaveLength(2) // first send + deduped second send
+    })
   })
 
   describe('mailbox drain', () => {

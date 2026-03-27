@@ -44,6 +44,11 @@ export class RelayRoom {
   /** Lazy federation link manager for outbound cross-directory routing */
   private federationLinks: FederationLinkManager | null = null
 
+  /** Recent message IDs for dedup (prevents relay of duplicate/replayed envelopes) */
+  private recentMessageIds = new Map<string, number>()
+  private static readonly DEDUP_TTL_MS = 60 * 60 * 1000 // 1 hour
+  private static readonly DEDUP_CLEANUP_THRESHOLD = 10000
+
   constructor(ctx: DurableObjectState, env: Env) {
     this.ctx = ctx
     this.env = env
@@ -275,6 +280,34 @@ export class RelayRoom {
     this.sendJson(ws, { type: 'auth:success', handle: result.state.handle })
   }
 
+  /**
+   * Check if a message ID has been seen recently.
+   * Returns true if duplicate (should be rejected), false if new.
+   */
+  private isDuplicate(messageId: string): boolean {
+    const now = Date.now()
+
+    // Periodic cleanup of expired entries
+    if (this.recentMessageIds.size > RelayRoom.DEDUP_CLEANUP_THRESHOLD) {
+      for (const [id, ts] of this.recentMessageIds) {
+        if (now - ts > RelayRoom.DEDUP_TTL_MS) {
+          this.recentMessageIds.delete(id)
+        }
+      }
+    }
+
+    if (this.recentMessageIds.has(messageId)) {
+      const seenAt = this.recentMessageIds.get(messageId)!
+      if (now - seenAt < RelayRoom.DEDUP_TTL_MS) {
+        return true
+      }
+    }
+
+    // New message (or expired entry treated as new): record timestamp
+    this.recentMessageIds.set(messageId, now)
+    return false
+  }
+
   private async handleRelaySend(ws: WebSocket, msg: { envelope: unknown }): Promise<void> {
     const senderState = this.getAuthenticatedState(ws)
     if (!senderState) {
@@ -301,6 +334,12 @@ export class RelayRoom {
         messageId: envelope.id,
         error: 'Sender identity mismatch',
       })
+      return
+    }
+
+    // Dedup: reject messages the hub has already seen
+    if (this.isDuplicate(envelope.id)) {
+      this.sendJson(ws, { type: 'relay:ack', messageId: envelope.id })
       return
     }
 
