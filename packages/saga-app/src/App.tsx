@@ -2,26 +2,20 @@
 // Copyright 2026 Epic Digital Interactive Media LLC
 
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { StyleSheet } from 'react-native'
+import { RootNavigator } from './navigation'
 
 export default function App(): React.JSX.Element {
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>SAGA App</Text>
-    </View>
+    <GestureHandlerRootView style={styles.root}>
+      <RootNavigator />
+    </GestureHandlerRootView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0a0a0f',
-  },
-  text: {
-    color: '#ffffff',
-    fontSize: 24,
-    fontWeight: '600',
   },
 })
