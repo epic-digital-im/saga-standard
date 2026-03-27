@@ -9,6 +9,15 @@ jest.mock('../src/navigation', () => ({
   RootNavigator: () => null,
 }))
 
+// Mock the providers
+jest.mock('../src/core/providers/StorageProvider', () => ({
+  StorageProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
+jest.mock('../src/core/providers/AuthProvider', () => ({
+  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
 import App from '../src/App'
 
 test('renders without crashing', () => {

@@ -4,12 +4,18 @@
 import React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { StyleSheet } from 'react-native'
+import { StorageProvider } from './core/providers/StorageProvider'
+import { AuthProvider } from './core/providers/AuthProvider'
 import { RootNavigator } from './navigation'
 
 export default function App(): React.JSX.Element {
   return (
     <GestureHandlerRootView style={styles.root}>
-      <RootNavigator />
+      <StorageProvider>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </StorageProvider>
     </GestureHandlerRootView>
   )
 }
