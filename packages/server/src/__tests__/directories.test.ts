@@ -189,6 +189,13 @@ describe('GET /v1/directories', () => {
     const body = (await res.json()) as { limit: number }
     expect(body.limit).toBe(100)
   })
+
+  it('returns 400 for invalid status filter', async () => {
+    const res = await app.request('http://localhost/v1/directories?status=bogus', {}, env)
+    expect(res.status).toBe(400)
+    const body = (await res.json()) as { code: string }
+    expect(body.code).toBe('BAD_REQUEST')
+  })
 })
 
 describe('GET /v1/directories/:directoryId', () => {

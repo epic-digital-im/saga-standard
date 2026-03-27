@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS directories (
   updated_at TEXT NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_directories_directory_id ON directories(directory_id);
 CREATE INDEX IF NOT EXISTS idx_directories_operator ON directories(operator_wallet);
 CREATE INDEX IF NOT EXISTS idx_directories_status ON directories(status);
 

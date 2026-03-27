@@ -40,4 +40,7 @@ export interface Env {
 
   /** Block number to start indexing from when no cursor exists in KV */
   INDEXER_START_BLOCK?: string
+
+  /** Secret for admin endpoints (e.g. /admin/reindex). Endpoint disabled if unset. */
+  ADMIN_SECRET?: string
 }

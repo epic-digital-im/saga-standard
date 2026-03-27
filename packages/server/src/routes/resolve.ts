@@ -31,6 +31,17 @@ resolveRoutes.get('/:identity', async c => {
   const handle = atIndex >= 0 ? identity.substring(0, atIndex) : identity
   const directoryId = atIndex >= 0 ? identity.substring(atIndex + 1) : null
 
+  // Validate parsed parts
+  if (atIndex >= 0 && (!handle || !directoryId)) {
+    return c.json(
+      {
+        error: 'Invalid identity format. Use "handle" or "handle@directoryId"',
+        code: 'BAD_REQUEST',
+      },
+      400
+    )
+  }
+
   // --- Directory-scoped resolution ---
   if (directoryId !== null) {
     // Verify directory exists

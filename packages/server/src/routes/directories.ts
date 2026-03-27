@@ -19,6 +19,14 @@ directoryRoutes.get('/', async c => {
   const status = c.req.query('status')
   const offset = (page - 1) * limit
 
+  const validStatuses = ['active', 'suspended', 'flagged', 'revoked']
+  if (status && !validStatuses.includes(status)) {
+    return c.json(
+      { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`, code: 'BAD_REQUEST' },
+      400
+    )
+  }
+
   const db = drizzle(c.env.DB)
 
   const whereClause = status ? eq(directories.status, status) : undefined

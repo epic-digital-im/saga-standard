@@ -72,8 +72,17 @@ app.route('/v1/agents', documentRoutes)
 // Health check
 app.get('/health', c => c.json({ status: 'ok' }))
 
-// Admin: manually trigger indexer (dev only)
+// Admin: manually trigger indexer (requires ADMIN_SECRET)
 app.post('/admin/reindex', async c => {
+  const secret = c.env.ADMIN_SECRET
+  if (!secret) {
+    return c.json({ error: 'Admin endpoint not configured', code: 'FORBIDDEN' }, 403)
+  }
+  const provided = c.req.header('X-Admin-Secret')
+  if (provided !== secret) {
+    return c.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, 401)
+  }
+
   try {
     // Log config for debugging
     const rpc = c.env.BASE_RPC_URL ?? '(unset)'

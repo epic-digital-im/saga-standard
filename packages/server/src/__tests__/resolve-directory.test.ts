@@ -195,4 +195,18 @@ describe('GET /v1/resolve/:identity — handle@directoryId format', () => {
     expect('mintTxHash' in body).toBe(true)
     expect('registeredAt' in body).toBe(true)
   })
+
+  it('returns 400 for @directoryId (empty handle)', async () => {
+    const res = await app.request('http://localhost/v1/resolve/@epic-hub', {}, env)
+    expect(res.status).toBe(400)
+    const body = (await res.json()) as { code: string }
+    expect(body.code).toBe('BAD_REQUEST')
+  })
+
+  it('returns 400 for handle@ (empty directoryId)', async () => {
+    const res = await app.request('http://localhost/v1/resolve/bob@', {}, env)
+    expect(res.status).toBe(400)
+    const body = (await res.json()) as { code: string }
+    expect(body.code).toBe('BAD_REQUEST')
+  })
 })
