@@ -41,7 +41,7 @@ app.get('/', c => {
       server: '/v1/server',
       agents: '/v1/agents',
       orgs: '/v1/orgs',
-      resolve: '/v1/resolve/:handle',
+      resolve: '/v1/resolve/:identity',
       auth: '/v1/auth/challenge',
       health: '/health',
       keys: '/v1/keys/:handle',

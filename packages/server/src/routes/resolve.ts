@@ -41,7 +41,7 @@ resolveRoutes.get('/:identity', async c => {
       .limit(1)
 
     if (dirResults.length === 0) {
-      return c.json({ error: 'Handle not found', code: 'NOT_FOUND' }, 404)
+      return c.json({ error: 'Directory not found', code: 'NOT_FOUND' }, 404)
     }
 
     // Look up agent scoped to this directory
