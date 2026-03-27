@@ -16,5 +16,7 @@ module.exports = {
       '<rootDir>/__mocks__/@react-native-async-storage/async-storage.js',
     '^@scure/bip39/wordlists/([^.]+)(\\.js)?$':
       '<rootDir>/../../node_modules/.pnpm/@scure+bip39@2.0.1/node_modules/@scure/bip39/wordlists/$1.js',
+    'react-native-qrcode-svg': '<rootDir>/__mocks__/react-native-qrcode-svg.js',
+    '@react-native-clipboard/clipboard': '<rootDir>/__mocks__/@react-native-clipboard/clipboard.js',
   },
 }

@@ -2,23 +2,34 @@
 // Copyright 2026 Epic Digital Interactive Media LLC
 
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import { colors, typography } from '../../../core/theme'
+import { StyleSheet, View } from 'react-native'
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { SafeArea } from '../../../components/SafeArea'
+import { Header } from '../../../components/Header'
+import { QRAddress } from '../components/QRAddress'
+import { spacing } from '../../../core/theme'
+import type { WalletStackParamList } from '../../../navigation/types'
 
-export function ReceiveScreen(): React.JSX.Element {
+type Props = NativeStackScreenProps<WalletStackParamList, 'ReceiveScreen'>
+
+export function ReceiveScreen({ navigation, route }: Props): React.JSX.Element {
+  const { address } = route.params
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Receive</Text>
-    </View>
+    <SafeArea>
+      <Header title="Receive" leftAction={{ label: 'Back', onPress: () => navigation.goBack() }} />
+      <View style={styles.content}>
+        <QRAddress address={address} size={220} />
+      </View>
+    </SafeArea>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    padding: spacing.xl,
   },
-  text: { ...typography.h2, color: colors.textPrimary },
 })
