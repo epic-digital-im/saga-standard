@@ -13,7 +13,9 @@ import type {
   SearchResult,
 } from '../types'
 
-export const HUB_URL = 'https://saga-hub.epic-digital-im.workers.dev'
+export const HUB_URL = __DEV__
+  ? 'http://localhost:8787'
+  : 'https://saga-hub.epic-digital-im.workers.dev'
 export const PAGE_SIZE = 20
 
 export class ApiError extends Error {
